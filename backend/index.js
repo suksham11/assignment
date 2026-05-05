@@ -144,12 +144,10 @@ app.post("/projects", authRequired, requireAdmin, async (req, res) => {
   const { name, description } = req.body;
   if (!name) return res.status(400).json({ error: "Name required" });
   try {
-    res
-      .status(201)
-      .json({
-        message: "Created",
-        project: await Project.create({ name, description }),
-      });
+    res.status(201).json({
+      message: "Created",
+      project: await Project.create({ name, description }),
+    });
   } catch {
     res.status(500).json({ error: "Error creating project" });
   }
@@ -314,14 +312,26 @@ app.get("/", (_, res) => {
 });
 
 app.use((req, res, next) => {
-  if (req.path.startsWith("/api") || req.path.startsWith("/signup") || req.path.startsWith("/login") || req.path.startsWith("/projects") || req.path.startsWith("/tasks") || req.path.startsWith("/dashboard") || req.path.startsWith("/users") || req.path.startsWith("/health")) {
+  if (
+    req.path.startsWith("/api") ||
+    req.path.startsWith("/signup") ||
+    req.path.startsWith("/login") ||
+    req.path.startsWith("/projects") ||
+    req.path.startsWith("/tasks") ||
+    req.path.startsWith("/dashboard") ||
+    req.path.startsWith("/users") ||
+    req.path.startsWith("/health")
+  ) {
     return res.status(404).json({ error: "Not found" });
   }
   next();
 });
 
-app.get("/:path(*)", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
-});
+app.get(
+  /^(?!\/(signup|login|projects|tasks|dashboard|users|health|api)).*$/,
+  (req, res) => {
+    res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+  },
+);
 
 app.listen(PORT, () => console.log(`Server on http://localhost:${PORT}`));
