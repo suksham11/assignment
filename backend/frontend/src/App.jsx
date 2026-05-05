@@ -33,8 +33,11 @@ export default function App() {
     evt.preventDefault();
     resetNotice();
     setLoading(true);
-
     const form = evt.currentTarget;
+    if (!form) {
+      setLoading(false);
+      return;
+    }
     const payload = Object.fromEntries(new FormData(form));
 
     try {
@@ -48,7 +51,7 @@ export default function App() {
       saveToken(data.token);
       localStorage.setItem("ttm_user", JSON.stringify(data.user));
       setAuth({ user: data.user, token: data.token });
-      form.reset();
+      if (typeof form.reset === "function") form.reset();
     } catch (error) {
       setNotice(error.message);
     } finally {
@@ -118,11 +121,16 @@ export default function App() {
     evt.preventDefault();
     resetNotice();
     setLoading(true);
-    const payload = Object.fromEntries(new FormData(evt.currentTarget));
+    const form = evt.currentTarget;
+    if (!form) {
+      setLoading(false);
+      return;
+    }
+    const payload = Object.fromEntries(new FormData(form));
 
     try {
       await api.createProject(payload);
-      evt.currentTarget.reset();
+      if (typeof form.reset === "function") form.reset();
       await refreshAll();
     } catch (error) {
       setNotice(error.message);
@@ -135,13 +143,22 @@ export default function App() {
     evt.preventDefault();
     resetNotice();
     setLoading(true);
-
-    const payload = Object.fromEntries(new FormData(evt.currentTarget));
+    const form = evt.currentTarget;
+    if (!form) {
+      setLoading(false);
+      return;
+    }
+    const payload = Object.fromEntries(new FormData(form));
     const projectId = payload.projectId;
+    if (!projectId || !payload.userId) {
+      setNotice("Select a project and member to add.");
+      setLoading(false);
+      return;
+    }
 
     try {
       await api.addMember(projectId, { userId: payload.userId });
-      evt.currentTarget.reset();
+      if (typeof form.reset === "function") form.reset();
       await refreshAll();
     } catch (error) {
       setNotice(error.message);
@@ -154,7 +171,12 @@ export default function App() {
     evt.preventDefault();
     resetNotice();
     setLoading(true);
-    const payload = Object.fromEntries(new FormData(evt.currentTarget));
+    const form = evt.currentTarget;
+    if (!form) {
+      setLoading(false);
+      return;
+    }
+    const payload = Object.fromEntries(new FormData(form));
 
     try {
       await api.createTask({
@@ -165,7 +187,7 @@ export default function App() {
         userId: payload.userId || undefined,
         dueDate: payload.dueDate || null,
       });
-      evt.currentTarget.reset();
+      if (typeof form.reset === "function") form.reset();
       await refreshAll();
     } catch (error) {
       setNotice(error.message);
@@ -492,6 +514,14 @@ export default function App() {
                   ))}
                 </select>
               </label>
+              {!projectOptions.length && (
+                <p className="hint">Create a project before adding members.</p>
+              )}
+              {!memberOptions.length && (
+                <p className="hint">
+                  Invite a member to sign up so they appear here.
+                </p>
+              )}
               <button className="primary" type="submit" disabled={loading}>
                 Add member
               </button>
