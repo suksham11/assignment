@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
+const path = require("path");
 const { Op } = require("sequelize");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -10,6 +11,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -28,6 +30,7 @@ app.use(
   }),
 );
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "frontend", "dist")));
 
 const db = require("./models");
 const { User, Project, Task } = db;
@@ -44,7 +47,7 @@ const authRequired = async (req, res, next) => {
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
   if (!token) return res.status(401).json({ error: "Missing token" });
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET);
     const user = await User.findByPk(payload.id);
     if (!user) return res.status(401).json({ error: "Invalid token" });
     req.user = user;
@@ -101,7 +104,7 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: "24h" },
     );
     res.json({ message: "Login successful", token, user: safeUser(user) });
@@ -310,8 +313,15 @@ app.get("/", (_, res) => {
   });
 });
 
-app.use((req, res) => {
-  res.status(404).json({ error: "Not found" });
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api") || req.path.startsWith("/signup") || req.path.startsWith("/login") || req.path.startsWith("/projects") || req.path.startsWith("/tasks") || req.path.startsWith("/dashboard") || req.path.startsWith("/users") || req.path.startsWith("/health")) {
+    return res.status(404).json({ error: "Not found" });
+  }
+  next();
+});
+
+app.get("/:path(*)", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
 });
 
 app.listen(PORT, () => console.log(`Server on http://localhost:${PORT}`));

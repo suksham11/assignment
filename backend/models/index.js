@@ -3,14 +3,20 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: "postgres",
-  protocol: "postgres",
-  dialectOptions: {
-    ssl: process.env.NODE_ENV === "production" ? { require: true, rejectUnauthorized: false } : false,
-  },
-  logging: false,
-});
+const sequelize = process.env.DATABASE_URL
+  ? new Sequelize(process.env.DATABASE_URL, {
+      dialect: "postgres",
+      protocol: "postgres",
+      dialectOptions: {
+        ssl: process.env.NODE_ENV === "production" ? { require: true, rejectUnauthorized: false } : false,
+      },
+      logging: false,
+    })
+  : new Sequelize({
+      dialect: "sqlite",
+      storage: "./database.sqlite",
+      logging: false,
+    });
 
 const db = {};
 
