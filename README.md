@@ -86,11 +86,3 @@ Backend runs at http://localhost:5000
 - Set environment variables from .env.
 - Deploy the backend and frontend as separate services.
 
-## Demo Video
-
-Record a 2-5 min walkthrough covering:
-
-- Auth flow
-- Admin creating projects and members
-- Task assignment and status updates
-- Dashboard metrics
